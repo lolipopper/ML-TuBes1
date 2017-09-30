@@ -38,9 +38,11 @@ public class myID3 extends AbstractClassifier {
                 int attributeIndex = decideAttributeFactor(entropyS, instances, decisionCondition, processedIndexes);
                 ArrayList<Integer> copyList = new ArrayList<>(processedIndexes);
                 copyList.add(attributeIndex);
+//                Add Node based on attribut Index for Tree HERE
                 for (int i=0; i<instances.attribute(attributeIndex).numValues(); i++){
 //                    System.out.println(instances.attribute(attributeIndex).value(i));
                     String condition = addStringCondition(decisionCondition,attributeIndex,instances.attribute(attributeIndex).value(i));
+//                    Add Vertex based on attribute value HERE
 //                    System.out.println(condition);
                     newInstances = filterInstances(instances,condition);        
 //                    printInstances(newInstances);
@@ -49,9 +51,11 @@ public class myID3 extends AbstractClassifier {
                 }
             }else{
                 System.out.println(decisionCondition);
+//              Replace Node based on attribute into Leaf with instance value HERE
                 System.out.println("This is leaf for = " + instances.instance(0).value(instances.classIndex()));
             }
         }else{
+            //Unknown
             System.out.println("Ada yang sampai sini ga?");
         }
     }
