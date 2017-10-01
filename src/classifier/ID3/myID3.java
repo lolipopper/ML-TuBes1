@@ -1,11 +1,8 @@
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
-import java.util.TreeMap;
 import weka.classifiers.AbstractClassifier;
 import weka.core.AttributeStats;
 import weka.core.Instance;
@@ -50,8 +47,8 @@ public class myID3 extends AbstractClassifier {
                     recursiveIterate(newInstances, insertAnd(condition), copyList, node.getChildren(instances.attribute(attributeIndex).value(i)));
                 }
             }else{
-                int result = (int)instances.instance(0).value(instances.classIndex());
-                node.setLeaf(instances.classAttribute().value(result));
+//                int result = (int)instances.instance(0).value(instances.classIndex());
+                node.setLeaf(instances.instance(0).value(instances.classIndex()));
             }
         }else{
             System.out.println("Ada yang sampai sini ga?");
@@ -65,7 +62,7 @@ public class myID3 extends AbstractClassifier {
             node = node.getChildren(instance.stringValue(instance.attribute(node.getKey())));
         }
         System.out.println(node.getValue());
-        return 0;
+        return node.getValue();
     }
 
     @Override
@@ -168,12 +165,12 @@ public class myID3 extends AbstractClassifier {
 class myID3Node{
     public boolean isLeaf = false;
     private int key;
-    private String value;
+    private double value;
     private HashMap<String, myID3Node> children;
     
     myID3Node(){
         children = new HashMap<>();
-        value = "Undefined";
+        value = -999.0;
     }
     
     public void addChildren(String value){
@@ -181,7 +178,7 @@ class myID3Node{
         children.put(value,childNode);
     }
     
-    public void setLeaf(String value){
+    public void setLeaf(double value){
         this.value = value;
         isLeaf = true;
     }
@@ -194,7 +191,7 @@ class myID3Node{
         return key;
     }
     
-    public String getValue(){
+    public double getValue(){
         return value;
     }
     
