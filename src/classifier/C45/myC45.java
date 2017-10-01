@@ -7,6 +7,7 @@ import weka.core.Capabilities;
 import weka.core.Instance;
 import weka.core.Instances;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -89,7 +90,7 @@ public class myC45 extends AbstractClassifier {
     }
 }
 
-class DTLNode {
+class DTLNode implements Serializable {
     private boolean isLeaf = false;
     private Double classifiedClass;
     private Attribute attributeToClassify;
