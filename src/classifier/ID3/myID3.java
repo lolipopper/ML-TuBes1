@@ -1,8 +1,5 @@
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
+package classifier.ID3;
+
 import weka.classifiers.AbstractClassifier;
 import weka.core.AttributeStats;
 import weka.core.Instance;
@@ -10,6 +7,12 @@ import weka.core.Instances;
 import weka.core.converters.ConverterUtils.DataSource;
 import weka.filters.Filter;
 import weka.filters.unsupervised.instance.SubsetByExpression;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 
 /**
  * Created by nathanjamesruntuwene on 9/20/17.
@@ -93,7 +96,7 @@ public class myID3 extends AbstractClassifier {
         return id;
     }
 
-    public double calculateEntropy(Instances instances){
+    public static double calculateEntropy(Instances instances){
         AttributeStats stats = instances.attributeStats(instances.classIndex());
         int[] countResults = (stats.nominalCounts);
         int totalCount = stats.totalCount;
@@ -107,7 +110,7 @@ public class myID3 extends AbstractClassifier {
         return ret;
     }
 
-    public double calculateGain(double entropy, Instances instances, int attributeIndex, String addCondition) throws Exception{
+    public static double calculateGain(double entropy, Instances instances, int attributeIndex, String addCondition) throws Exception{
         double ret = entropy;
         for(int i=0; i<instances.attribute(attributeIndex).numValues(); i++){
 //            System.out.println(instances.attribute(attributeIndex).value(i));
@@ -129,7 +132,7 @@ public class myID3 extends AbstractClassifier {
         System.out.println("");
     }
     
-    public Instances filterInstances(Instances instances, String condition) throws Exception{
+    public static Instances filterInstances(Instances instances, String condition) throws Exception{
         SubsetByExpression filter = new SubsetByExpression();
         String[] options = new String[2];
         options[0] = "-E";
