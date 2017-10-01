@@ -191,7 +191,7 @@ class DTLNode implements Serializable {
     private double calcInformationGainMax(Instances instances) {
         double informationGainMax = 0;
         Enumeration<Attribute> attributeEnumeration = instances.enumerateAttributes();
-        while (attributeEnumeration.hasMoreElements()){
+        while (attributeEnumeration.hasMoreElements()) {
             Attribute attribute = attributeEnumeration.nextElement();
             if (attribute == instances.classAttribute())
                 continue;
@@ -308,12 +308,12 @@ class DTLNode implements Serializable {
         return this.children.get(instance.value(this.attributeToClassify)).classify(instance);
     }
 
-    
-    public boolean hasChildren(){
+
+    public boolean hasChildren() {
         return children.isEmpty();
     }
-    
-    void prunReducedError(Instances evaluationSet){
+
+    void prunReducedError(Instances evaluationSet) {
         ArrayList<DTLNode> leafNodes = this.getAllLeaf();
         int prevErr = countError(evaluationSet);
         for (DTLNode leafNode : leafNodes) {
@@ -330,30 +330,30 @@ class DTLNode implements Serializable {
             }
         }
     }
-    
-    ArrayList<DTLNode> getAllLeaf(){
+
+    ArrayList<DTLNode> getAllLeaf() {
         ArrayList<DTLNode> list = new ArrayList<>();
         getLeaf(list, this);
         return list;
     }
-    
-    void getLeaf(ArrayList<DTLNode> list, DTLNode node){
-        if(node.isLeaf){
+
+    void getLeaf(ArrayList<DTLNode> list, DTLNode node) {
+        if (node.isLeaf) {
             list.add(node);
-        }else{
+        } else {
             node.children.forEach((aDouble, dtlNode) -> getLeaf(list, dtlNode));
-        }        
+        }
     }
-    
-    int countError(Instances evaluationSet){
+
+    int countError(Instances evaluationSet) {
         int error = 0;
-        for(int i=0; i<evaluationSet.numInstances(); i++){
+        for (int i = 0; i < evaluationSet.numInstances(); i++) {
             Instance instance = evaluationSet.instance(i);
-            if(instance.value(instance.classIndex()) != classify(instance)){
+            if (instance.value(instance.classIndex()) != classify(instance)) {
                 error++;
             }
         }
         return error;
     }
-    
+
 }
