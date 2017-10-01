@@ -6,6 +6,7 @@ import classifier.C45.myC45;
 import classifier.ID3.myID3;
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Evaluation;
+import weka.classifiers.trees.J48;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.SerializationHelper;
@@ -94,7 +95,7 @@ public class Main {
 
             // Assign classifiers
             Instances trainingData;
-            if (classifierName.equals("ID3")) {
+            if (classifierName.equals("myID3")) {
                 classifier = new myID3();
 
                 // Discretize attributes
@@ -103,11 +104,23 @@ public class Main {
                 trainingData = Filter.useFilter(resampledTrainingData, discretize);
 
                 System.out.println(trainingData.toString());
-            } else if (classifierName.equals("C45")) {
+            } else if (classifierName.equals("myC45")) {
                 classifier = new myC45();
                 trainingData = resampledTrainingData;
+            } else if (classifierName.equals("ID3")) {
+                classifier = new myID3();
+
+                // Discretize attributes
+                Discretize discretize = new Discretize();
+                discretize.setInputFormat(resampledTrainingData);
+                trainingData = Filter.useFilter(resampledTrainingData, discretize);
+
+                System.out.println(trainingData.toString());
+            } else if (classifierName.equals("J48")) {
+                classifier = new J48();
+                trainingData = resampledTrainingData;
             } else {
-                System.out.println("Classifier needs to be either \'ID3\' or \'C45\'");
+                System.out.println("Classifier needs to be either 'myID3', 'myC45', 'ID3', or 'J48");
                 return;
             }
 
@@ -164,6 +177,7 @@ public class Main {
             }
         }
 
+        // SAVE MODEL
         if (saveLocation.length() > 0)
             SerializationHelper.write(saveLocation, classifier);
     }

@@ -10,6 +10,7 @@ import weka.filters.unsupervised.instance.SubsetByExpression;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -183,7 +184,7 @@ public class myID3 extends AbstractClassifier {
 
 }
 
-class myID3Node implements Serializable{
+class myID3Node implements Serializable {
     public boolean isLeaf = false;
     private int key;
     private double value;
