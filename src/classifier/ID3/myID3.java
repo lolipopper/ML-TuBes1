@@ -27,11 +27,11 @@ public class myID3 extends AbstractClassifier {
         
         ArrayList<Integer> processedIndex = new ArrayList<>();
         String addCondition = "";
-        recursiveIterate(instances, addCondition, processedIndex, model);
+        recursiveIterate(instances, addCondition, processedIndex, model, instances);
 //        testInstance(instances);
     }
     
-    public void recursiveIterate(Instances instances, String decisionCondition, ArrayList<Integer> processedIndexes, myID3Node node) throws Exception
+    public void recursiveIterate(Instances instances, String decisionCondition, ArrayList<Integer> processedIndexes, myID3Node node, Instances prevInstances) throws Exception
     {
         if(processedIndexes.size()<4){
             double entropyS = calculateEntropy(instances);
@@ -47,11 +47,25 @@ public class myID3 extends AbstractClassifier {
                     String condition = addStringCondition(decisionCondition,attributeIndex,instances.attribute(attributeIndex).value(i));
                     node.addChildren(instances.attribute(attributeIndex).value(i));
                     newInstances = filterInstances(instances,condition);        
-                    recursiveIterate(newInstances, insertAnd(condition), copyList, node.getChildren(instances.attribute(attributeIndex).value(i)));
+                    recursiveIterate(newInstances, insertAnd(condition), copyList, node.getChildren(instances.attribute(attributeIndex).value(i)),instances);
                 }
             }else{
-//                int result = (int)instances.instance(0).value(instances.classIndex());
-                node.setLeaf(instances.instance(0).value(instances.classIndex()));
+                if(instances.numInstances()>0){
+                    node.setLeaf(instances.instance(0).value(instances.classIndex()));
+                }else{
+                    AttributeStats stats = prevInstances.attributeStats(prevInstances.classIndex());
+                    int[] countResults = (stats.nominalCounts);
+                    int max = -999;
+                    int id = -999;
+                    for(int i=0;i<countResults.length;i++){
+                        if(countResults[i]>max){
+                            max = countResults[i];
+                            id = i;
+                        }
+                    }
+                    System.out.println(instances.attribute(instances.classIndex()).value(id));
+                    node.setLeaf(id);
+                }
             }
         }else{
             System.out.println("Ada yang sampai sini ga?");
