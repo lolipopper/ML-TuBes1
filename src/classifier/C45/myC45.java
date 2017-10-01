@@ -16,7 +16,6 @@ import java.util.concurrent.ThreadLocalRandom;
  * Created by nathanjamesruntuwene on 9/20/17.
  */
 public class myC45 extends AbstractClassifier {
-    // TODO(ParadiseCatz): Check missing attribute
     private DTLNode root;
     @Override
     public Capabilities getCapabilities() {
@@ -38,7 +37,41 @@ public class myC45 extends AbstractClassifier {
     public void buildClassifier(Instances instances) throws Exception {
         root = new DTLNode();
         Instances instancesCopy = new Instances(instances);
+        fillMissingValue(instancesCopy);
         root.buildTree(instancesCopy);
+    }
+
+    private void fillMissingValue(Instances instances) {
+        @SuppressWarnings("unchecked")
+        HashMap<Double, Integer>[] counter = new HashMap[instances.numAttributes()];
+        Double[] popularAttribute = new Double[instances.numAttributes()];
+        Integer[] maxCounter = new Integer[instances.numAttributes()];
+        Enumeration<Instance> instanceEnumeration = instances.enumerateInstances();
+        while (instanceEnumeration.hasMoreElements()) {
+            Instance instance = instanceEnumeration.nextElement();
+            Enumeration<Attribute> attributeEnumeration = instance.enumerateAttributes();
+            while (attributeEnumeration.hasMoreElements()) {
+                Attribute attribute = attributeEnumeration.nextElement();
+                if (instance.isMissing(attribute))
+                    continue;
+                counter[attribute.index()].put(instance.value(attribute), counter[attribute.index()].getOrDefault(instance.value(attribute), 0) + 1);
+                if (counter[attribute.index()].get(instance.value(attribute)) > maxCounter[attribute.index()]) {
+                    maxCounter[attribute.index()] = counter[attribute.index()].get(instance.value(attribute));
+                    popularAttribute[attribute.index()] = instance.value(attribute);
+                }
+            }
+        }
+        instanceEnumeration = instances.enumerateInstances();
+        while (instanceEnumeration.hasMoreElements()) {
+            Instance instance = instanceEnumeration.nextElement();
+            Enumeration<Attribute> attributeEnumeration = instance.enumerateAttributes();
+            while (attributeEnumeration.hasMoreElements()) {
+                Attribute attribute = attributeEnumeration.nextElement();
+                if (instance.isMissing(attribute)) {
+                    instance.setValue(attribute, popularAttribute[attribute.index()]);
+                }
+            }
+        }
     }
 
     @Override
@@ -57,6 +90,7 @@ class DTLNode {
     private Double classifiedClass;
     private Attribute attributeToClassify;
     private HashMap<Double, DTLNode> children;
+    private DTLNode popularChild;
     private Double threshold;
 
     DTLNode() {
@@ -90,7 +124,10 @@ class DTLNode {
 
     private void makeChildren(Instances instances) {
         HashMap<Double, Instances> childInstances = new HashMap<>();
+        HashMap<Double, Integer> counter = new HashMap<>();
         Enumeration<Instance> instanceEnumeration = instances.enumerateInstances();
+        Integer maxCount = 0;
+        Double favValue = null;
         while (instanceEnumeration.hasMoreElements()) {
             Instance instance = instanceEnumeration.nextElement();
             if (enableThreshold(this.attributeToClassify)) {
@@ -105,11 +142,20 @@ class DTLNode {
             }
             childInstances.putIfAbsent(instance.value(this.attributeToClassify), new Instances(instances, 0));
             childInstances.get(instance.value(this.attributeToClassify)).add(instance);
+            counter.put(instance.value(this.attributeToClassify), counter.getOrDefault(instance.value(this.attributeToClassify), 0) + 1);
+            if (counter.get(instance.value(this.attributeToClassify)) > maxCount) {
+                maxCount = counter.get(instance.value(this.attributeToClassify));
+                favValue = instance.value(this.attributeToClassify);
+            }
         }
+        Double finalFavValue = favValue;
         childInstances.forEach((val, ci) -> {
             DTLNode node = new DTLNode();
             ci.deleteAttributeAt(this.attributeToClassify.index());
             node.buildTree(ci);
+            if (val == finalFavValue) {
+                this.popularChild = node;
+            }
             this.children.put(val, node);
         });
     }
@@ -228,6 +274,9 @@ class DTLNode {
             } else {
                 return this.children.get(1.0).classify(instance);
             }
+        }
+        if (instance.isMissing(this.attributeToClassify)) {
+            return this.popularChild.classify(instance);
         }
         return this.children.get(instance.value(this.attributeToClassify)).classify(instance);
     }
