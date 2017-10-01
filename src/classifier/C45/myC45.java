@@ -6,7 +6,10 @@ import weka.core.Attribute;
 import weka.core.Capabilities;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.core.converters.ConverterUtils;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -16,6 +19,19 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public class myC45 extends AbstractClassifier {
     private DTLNode root;
+
+    public static void main(String[] args) throws Exception {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        String filename = "/Users/anthony/ML/ML-TuBes1/test/iris.arff";
+        ConverterUtils.DataSource source = new ConverterUtils.DataSource(filename);
+        Instances data = source.getDataSet();
+        if (data.classIndex() == -1) {
+            data.setClassIndex(data.numAttributes() - 1);
+        }
+        myC45 classifier = new myC45();
+        classifier.buildClassifier(data);
+    }
+
     @Override
     public Capabilities getCapabilities() {
         Capabilities result = super.getCapabilities();   // returns the object from weka.classifiers.Classifier
@@ -32,6 +48,7 @@ public class myC45 extends AbstractClassifier {
 
         return result;
     }
+
     @Override
     public void buildClassifier(Instances instances) throws Exception {
         root = new DTLNode();
@@ -41,13 +58,14 @@ public class myC45 extends AbstractClassifier {
     }
 
     private void fillMissingValue(Instances instances) {
-        @SuppressWarnings("unchecked")
-        HashMap<Double, Integer>[] counter = new HashMap[instances.numAttributes()];
-        for (int i = 0; i < counter.length; i++) {
-            counter[i] = new HashMap<>();
-        }
+        Vector<HashMap<Double, Integer>> counter = new Vector<>();
         Double[] popularAttribute = new Double[instances.numAttributes()];
         Integer[] maxCounter = new Integer[instances.numAttributes()];
+        for (int i = 0; i < instances.numAttributes(); i++) {
+            counter.add(new HashMap<>());
+            popularAttribute[i] = null;
+            maxCounter[i] = 0;
+        }
         Enumeration<Instance> instanceEnumeration = instances.enumerateInstances();
         while (instanceEnumeration.hasMoreElements()) {
             Instance instance = instanceEnumeration.nextElement();
@@ -56,9 +74,9 @@ public class myC45 extends AbstractClassifier {
                 Attribute attribute = attributeEnumeration.nextElement();
                 if (instance.isMissing(attribute))
                     continue;
-                counter[attribute.index()].put(instance.value(attribute), counter[attribute.index()].getOrDefault(instance.value(attribute), 0) + 1);
-                if (counter[attribute.index()].get(instance.value(attribute)) > maxCounter[attribute.index()]) {
-                    maxCounter[attribute.index()] = counter[attribute.index()].get(instance.value(attribute));
+                counter.get(attribute.index()).put(instance.value(attribute), counter.get(attribute.index()).getOrDefault(instance.value(attribute), 0) + 1);
+                if (counter.get(attribute.index()).get(instance.value(attribute)) > maxCounter[attribute.index()]) {
+                    maxCounter[attribute.index()] = counter.get(attribute.index()).get(instance.value(attribute));
                     popularAttribute[attribute.index()] = instance.value(attribute);
                 }
             }
