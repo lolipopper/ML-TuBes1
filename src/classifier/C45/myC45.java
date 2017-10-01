@@ -1,5 +1,6 @@
 package classifier.C45;
 
+import classifier.ID3.myID3;
 import weka.classifiers.AbstractClassifier;
 import weka.core.Attribute;
 import weka.core.Capabilities;
@@ -25,6 +26,7 @@ public class myC45 extends AbstractClassifier {
         result.enable(Capabilities.Capability.NOMINAL_ATTRIBUTES);
         result.enable(Capabilities.Capability.NUMERIC_ATTRIBUTES);
         result.enable(Capabilities.Capability.MISSING_VALUES);
+        result.enable(Capabilities.Capability.DATE_ATTRIBUTES);
 
         // class
         result.enable(Capabilities.Capability.NOMINAL_CLASS);
@@ -75,7 +77,10 @@ class DTLNode {
             classifiedClass = instances.firstInstance().classValue();
             return;
         }
-        // TODO(ParadiseCatz): check attribute number / base case
+        if (instances.numAttributes() <= 1) {
+            makeLeaf(instances);
+            return;
+        }
         double informationGainMax = 0;
         Enumeration<Attribute> attributeEnumeration = instances.enumerateAttributes();
         while (attributeEnumeration.hasMoreElements()){
@@ -103,7 +108,7 @@ class DTLNode {
                 thresholdMax = thresholdCandidate[0];
                 double maxGain = 0;
                 for (double candidate : thresholdCandidate) {
-                    double gain = calcThresholdGain(candidate, instances);
+                    double gain = calcThresholdGain(candidate, attribute, instances);
                     if (gain > maxGain) {
                         maxGain = gain;
                         thresholdMax = candidate;
@@ -120,20 +125,7 @@ class DTLNode {
             }
         }
         if (informationGainMax == 0) {
-            double[] instancesClassValues = instances.attributeToDoubleArray(instances.classIndex());
-            HashMap<Double, Integer> counter = new HashMap<>();
-            Integer maxCount = 0;
-            Double maxCountValue = null;
-            for (double val : instancesClassValues) {
-                Integer count = counter.getOrDefault(val, 0) + 1;
-                counter.put(val, count);
-                if (maxCount < count) {
-                    maxCount = count;
-                    maxCountValue = val;
-                }
-            }
-            this.isLeaf = true;
-            this.classifiedClass = maxCountValue;
+            makeLeaf(instances);
             return;
         }
         HashMap<Double, Instances> childInstances = new HashMap<>();
@@ -155,28 +147,66 @@ class DTLNode {
         }
         childInstances.forEach((val, ci) -> {
             DTLNode node = new DTLNode();
+            ci.deleteAttributeAt(this.attributeToClassify.index());
             node.buildTree(ci);
             this.children.put(val, node);
         });
+    }
+
+    // Make leaf with classified class as the most frequent class in instances
+    private void makeLeaf(Instances instances) {
+        double[] instancesClassValues = instances.attributeToDoubleArray(instances.classIndex());
+        HashMap<Double, Integer> counter = new HashMap<>();
+        Integer maxCount = 0;
+        Double maxCountValue = null;
+        for (double val : instancesClassValues) {
+            Integer count = counter.getOrDefault(val, 0) + 1;
+            counter.put(val, count);
+            if (maxCount < count) {
+                maxCount = count;
+                maxCountValue = val;
+            }
+        }
+        this.isLeaf = true;
+        this.classifiedClass = maxCountValue;
     }
 
     private boolean enableThreshold(Attribute attribute) {
         return attribute.isNumeric();
     }
 
-    private double calcThresholdGain(double candidate, Instances instances) {
-        // TODO(ParadiseCatz): implement this
-        return 0;
+    private double calcThresholdGain(double candidate, Attribute attribute, Instances instances) {
+        // TODO(ParadiseCatz): Is this correct?
+        return calcInformationGain(attribute, instances, candidate);
     }
 
     private double calcInformationGain(Attribute attribute, Instances instances) {
-        // TODO(ParadiseCatz): implement this
-        return 0;
+        try {
+            return myID3.calculateGain(myID3.calculateEntropy(instances), instances, attribute.index(), "");
+        } catch (Exception e) {
+            throw new Error(e);
+        }
     }
 
     private double calcInformationGain(Attribute attribute, Instances instances, double threshold) {
-        // TODO(ParadiseCatz): implement this
-        return 0;
+        double informationGain;
+        double[] attributeValues = instances.attributeToDoubleArray(attribute.index());
+        for (int i = 0; i < instances.numInstances(); i++) {
+            if (instances.instance(i).value(attribute) <= threshold) {
+                instances.instance(i).setValue(attribute, 0.0);
+            } else {
+                instances.instance(i).setValue(attribute, 1.0);
+            }
+        }
+        try {
+            informationGain = myID3.calculateGain(myID3.calculateEntropy(instances), instances, attribute.index(), "");
+        } catch (Exception e) {
+            throw new Error(e);
+        }
+        for (int i = 0; i < instances.numInstances(); i++) {
+            instances.instance(i).setValue(attribute, attributeValues[i]);
+        }
+        return informationGain;
     }
 
     Double classify(Instance instance) {
