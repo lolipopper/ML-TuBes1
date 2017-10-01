@@ -2,7 +2,10 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.TreeMap;
 import weka.classifiers.AbstractClassifier;
 import weka.core.AttributeStats;
 import weka.core.Instance;
@@ -15,62 +18,66 @@ import weka.filters.unsupervised.instance.SubsetByExpression;
  * Created by nathanjamesruntuwene on 9/20/17.
  */
 public class myID3 extends AbstractClassifier {    
-    private Instances data;
+    private myID3Node model;
     
     @Override
     public void buildClassifier(Instances instances) throws Exception {
-        data = new Instances(instances);
+        //Init model
+        model = new myID3Node();
+        
         ArrayList<Integer> processedIndex = new ArrayList<>();
         String addCondition = "";
-        recursiveIterate(instances, addCondition, processedIndex);
-//        int attributeIndex = decideAttributeFactor(instances, addCondition, processedIndex);
-//        processedIndex.add(attributeIndex);
-        
+        recursiveIterate(instances, addCondition, processedIndex, model);
+//        testInstance(instances);
     }
     
-    public void recursiveIterate(Instances instances, String decisionCondition, ArrayList<Integer> processedIndexes) throws Exception
+    public void recursiveIterate(Instances instances, String decisionCondition, ArrayList<Integer> processedIndexes, myID3Node node) throws Exception
     {
         if(processedIndexes.size()<4){
             double entropyS = calculateEntropy(instances);
             if (entropyS>0){
                 Instances newInstances;
-//                System.out.println(decisionCondition);
                 int attributeIndex = decideAttributeFactor(entropyS, instances, decisionCondition, processedIndexes);
                 ArrayList<Integer> copyList = new ArrayList<>(processedIndexes);
-                copyList.add(attributeIndex);
-//                Add Node based on attribut Index for Tree HERE
-                for (int i=0; i<instances.attribute(attributeIndex).numValues(); i++){
-//                    System.out.println(instances.attribute(attributeIndex).value(i));
-                    String condition = addStringCondition(decisionCondition,attributeIndex,instances.attribute(attributeIndex).value(i));
-//                    Add Vertex based on attribute value HERE
-//                    System.out.println(condition);
-                    newInstances = filterInstances(instances,condition);        
-//                    printInstances(newInstances);
 
-                    recursiveIterate(newInstances, insertAnd(condition), copyList);
+                copyList.add(attributeIndex);
+                node.setKey(attributeIndex);                
+
+                for (int i=0; i<instances.attribute(attributeIndex).numValues(); i++){
+                    String condition = addStringCondition(decisionCondition,attributeIndex,instances.attribute(attributeIndex).value(i));
+                    node.addChildren(instances.attribute(attributeIndex).value(i));
+                    newInstances = filterInstances(instances,condition);        
+                    recursiveIterate(newInstances, insertAnd(condition), copyList, node.getChildren(instances.attribute(attributeIndex).value(i)));
                 }
             }else{
-                System.out.println(decisionCondition);
-//              Replace Node based on attribute into Leaf with instance value HERE
-                System.out.println("This is leaf for = " + instances.instance(0).value(instances.classIndex()));
+                int result = (int)instances.instance(0).value(instances.classIndex());
+                node.setLeaf(instances.classAttribute().value(result));
             }
         }else{
-            //Unknown
             System.out.println("Ada yang sampai sini ga?");
         }
     }
 
     @Override
     public double classifyInstance(Instance instance) throws Exception {
+        myID3Node node = model;
+        while(!node.isLeaf || !node.hasChildren()){
+            node = node.getChildren(instance.stringValue(instance.attribute(node.getKey())));
+        }
+        System.out.println(node.getValue());
         return 0;
     }
 
     @Override
     public double[] distributionForInstance(Instance instance) throws Exception {
         return new double[0];
+    }    
+    
+    public void testInstance(Instances instances) throws Exception{
+        for(int i=0; i < instances.numInstances(); i++){
+            classifyInstance(instances.instance(i));            
+        }        
     }
-    
-    
     
     public int decideAttributeFactor(double entropyS, Instances instances, String addCondition, ArrayList<Integer> processedIndexes) throws Exception{
         double maxIG = calculateGain(entropyS, instances, 0, addCondition);
@@ -105,7 +112,6 @@ public class myID3 extends AbstractClassifier {
 
     public double calculateGain(double entropy, Instances instances, int attributeIndex, String addCondition) throws Exception{
         double ret = entropy;
-        System.out.println(instances.attribute(attributeIndex));
         for(int i=0; i<instances.attribute(attributeIndex).numValues(); i++){
 //            System.out.println(instances.attribute(attributeIndex).value(i));
             String condition = addCondition + "(ATT"+(attributeIndex+1)+" is '" + instances.attribute(attributeIndex).value(i) +"')";
@@ -157,4 +163,52 @@ public class myID3 extends AbstractClassifier {
         classifier.buildClassifier(data);
     }
 
+}
+
+class myID3Node{
+    public boolean isLeaf = false;
+    private int key;
+    private String value;
+    private HashMap<String, myID3Node> children;
+    
+    myID3Node(){
+        children = new HashMap<>();
+        value = "Undefined";
+    }
+    
+    public void addChildren(String value){
+        myID3Node childNode = new myID3Node();
+        children.put(value,childNode);
+    }
+    
+    public void setLeaf(String value){
+        this.value = value;
+        isLeaf = true;
+    }
+    
+    public void setKey(int key){
+        this.key = key;
+    }
+    
+    public int getKey(){
+        return key;
+    }
+    
+    public String getValue(){
+        return value;
+    }
+    
+    public myID3Node getChildren(String value){
+        return children.get(value);
+    }
+    
+    public void printChildren(){
+        System.out.println("Key = "+key);
+        System.out.println("Value = "+value);
+        System.out.println(Arrays.asList(children));
+    }    
+    
+    public boolean hasChildren(){
+        return children.isEmpty();
+    }
 }
