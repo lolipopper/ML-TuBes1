@@ -10,6 +10,7 @@ import weka.core.Instances;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -153,7 +154,7 @@ class DTLNode {
             DTLNode node = new DTLNode();
             ci.deleteAttributeAt(this.attributeToClassify.index());
             node.buildTree(ci);
-            if (val == finalFavValue) {
+            if (Objects.equals(val, finalFavValue)) {
                 this.popularChild = node;
             }
             this.children.put(val, node);
