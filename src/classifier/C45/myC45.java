@@ -81,6 +81,41 @@ class DTLNode {
             makeLeaf(instances);
             return;
         }
+        if (calcInformationGainMax(instances) == 0) {
+            makeLeaf(instances);
+            return;
+        }
+        makeChildren(instances);
+    }
+
+    private void makeChildren(Instances instances) {
+        HashMap<Double, Instances> childInstances = new HashMap<>();
+        Enumeration<Instance> instanceEnumeration = instances.enumerateInstances();
+        while (instanceEnumeration.hasMoreElements()) {
+            Instance instance = instanceEnumeration.nextElement();
+            if (enableThreshold(this.attributeToClassify)) {
+                if (instance.value(this.attributeToClassify) <= this.threshold) {
+                    childInstances.putIfAbsent(0.0, new Instances(instances, 0));
+                    childInstances.get(0.0).add(instance);
+                } else {
+                    childInstances.putIfAbsent(1.0, new Instances(instances, 0));
+                    childInstances.get(1.0).add(instance);
+                }
+                continue;
+            }
+            childInstances.putIfAbsent(instance.value(this.attributeToClassify), new Instances(instances, 0));
+            childInstances.get(instance.value(this.attributeToClassify)).add(instance);
+        }
+        childInstances.forEach((val, ci) -> {
+            DTLNode node = new DTLNode();
+            ci.deleteAttributeAt(this.attributeToClassify.index());
+            node.buildTree(ci);
+            this.children.put(val, node);
+        });
+    }
+
+    // Calculate the maximum information gain
+    private double calcInformationGainMax(Instances instances) {
         double informationGainMax = 0;
         Enumeration<Attribute> attributeEnumeration = instances.enumerateAttributes();
         while (attributeEnumeration.hasMoreElements()){
@@ -124,33 +159,7 @@ class DTLNode {
                 this.threshold = thresholdMax;
             }
         }
-        if (informationGainMax == 0) {
-            makeLeaf(instances);
-            return;
-        }
-        HashMap<Double, Instances> childInstances = new HashMap<>();
-        Enumeration<Instance> instanceEnumeration = instances.enumerateInstances();
-        while (instanceEnumeration.hasMoreElements()) {
-            Instance instance = instanceEnumeration.nextElement();
-            if (enableThreshold(this.attributeToClassify)) {
-                if (instance.value(this.attributeToClassify) <= this.threshold) {
-                    childInstances.putIfAbsent(0.0, new Instances(instances, 0));
-                    childInstances.get(0.0).add(instance);
-                } else {
-                    childInstances.putIfAbsent(1.0, new Instances(instances, 0));
-                    childInstances.get(1.0).add(instance);
-                }
-                continue;
-            }
-            childInstances.putIfAbsent(instance.value(this.attributeToClassify), new Instances(instances, 0));
-            childInstances.get(instance.value(this.attributeToClassify)).add(instance);
-        }
-        childInstances.forEach((val, ci) -> {
-            DTLNode node = new DTLNode();
-            ci.deleteAttributeAt(this.attributeToClassify.index());
-            node.buildTree(ci);
-            this.children.put(val, node);
-        });
+        return informationGainMax;
     }
 
     // Make leaf with classified class as the most frequent class in instances
