@@ -8,10 +8,7 @@ import weka.core.Instance;
 import weka.core.Instances;
 
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -294,18 +291,18 @@ class DTLNode implements Serializable {
     
     void prunReducedError(Instances evaluationSet){
         ArrayList<DTLNode> leafNodes = this.getAllLeaf();
-        for(int i=0; i<leafNodes.size(); i++){
-            int prevErr = countError(evaluationSet);
-            DTLNode nodeParent = leafNodes.get(i).getParent();
+        int prevErr = countError(evaluationSet);
+        for (DTLNode leafNode : leafNodes) {
+            DTLNode nodeParent = leafNode.getParent();
             Double temp = nodeParent.classifiedClass;
             nodeParent.isLeaf = true;
-            nodeParent.classifiedClass = leafNodes.get(i).classifiedClass;
+            nodeParent.classifiedClass = leafNode.classifiedClass;
             int afterErr = countError(evaluationSet);
-            if(afterErr>prevErr){
+            if (afterErr > prevErr) {
                 nodeParent.isLeaf = false;
                 nodeParent.classifiedClass = temp;
-            }else{
-                leafNodes.get(i).pruneChecked = true;
+            } else {
+                prevErr = afterErr;
             }
         }
     }
@@ -318,12 +315,9 @@ class DTLNode implements Serializable {
     
     void getLeaf(ArrayList<DTLNode> list, DTLNode node){
         if(node.isLeaf){
-            if(!node.pruneChecked){
-                list.add(node);
-            }
+            list.add(node);
         }else{
-            getLeaf(list,node.children.get(0.0));
-            getLeaf(list,node.children.get(1.0));
+            node.children.forEach((aDouble, dtlNode) -> getLeaf(list, dtlNode));
         }        
     }
     
