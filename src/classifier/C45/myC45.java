@@ -83,11 +83,6 @@ public class myC45 extends AbstractClassifier {
     public double classifyInstance(Instance instance) throws Exception {
         return root.classify(instance);
     }
-
-    @Override
-    public double[] distributionForInstance(Instance instance) throws Exception {
-        return new double[0];
-    }
 }
 
 class DTLNode implements Serializable {

@@ -67,11 +67,6 @@ public class myID3 extends AbstractClassifier {
         System.out.println(node.getValue());
         return node.getValue();
     }
-
-    @Override
-    public double[] distributionForInstance(Instance instance) throws Exception {
-        return new double[0];
-    }    
     
     public void testInstance(Instances instances) throws Exception{
         for(int i=0; i < instances.numInstances(); i++){
@@ -114,7 +109,11 @@ public class myID3 extends AbstractClassifier {
         double ret = entropy;
         for(int i=0; i<instances.attribute(attributeIndex).numValues(); i++){
 //            System.out.println(instances.attribute(attributeIndex).value(i));
-            String condition = addCondition + "(ATT"+(attributeIndex+1)+" is '" + instances.attribute(attributeIndex).value(i) +"')";
+            String val = instances.attribute(attributeIndex).value(i);
+            if (val.charAt(0) != '\'') {
+                val = "'" + val + "'";
+            }
+            String condition = addCondition + "(ATT"+(attributeIndex+1)+" is " + val +")";
             Instances filteredInstances = filterInstances(instances,condition);
 //            System.out.println(filteredInstances.numInstances());
             ret -= calculateEntropy(filteredInstances)*((double)filteredInstances.numInstances()/instances.numInstances());            
@@ -137,6 +136,7 @@ public class myID3 extends AbstractClassifier {
         String[] options = new String[2];
         options[0] = "-E";
         options[1] = condition;
+        System.out.println(condition);
         filter.setOptions(options);
         filter.setInputFormat(instances);
         Instances filteredInstances = Filter.useFilter(instances, filter);
@@ -144,7 +144,11 @@ public class myID3 extends AbstractClassifier {
     }
     
     public String addStringCondition(String addOption, int attributeIndex, String value){
-        return addOption+"(ATT"+(attributeIndex+1)+" is '"+value+"')";
+        String val = value;
+        if (val.charAt(0) != '\'') {
+            val = "'" + val + "'";
+        }
+        return addOption+"(ATT"+(attributeIndex+1)+" is "+val+")";
     }
     
     public String insertAnd(String addOption){
