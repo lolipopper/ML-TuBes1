@@ -93,9 +93,14 @@ class DTLNode {
     private HashMap<Double, DTLNode> children;
     private DTLNode popularChild;
     private Double threshold;
+    private DTLNode parent = null;
 
     DTLNode() {
         children = new HashMap<>();
+    }
+
+    public DTLNode getParent() {
+        return parent;
     }
 
     // hackish method to swap, see https://stackoverflow.com/a/16826296
@@ -154,6 +159,7 @@ class DTLNode {
             DTLNode node = new DTLNode();
             ci.deleteAttributeAt(this.attributeToClassify.index());
             node.buildTree(ci);
+            node.parent = this;
             if (Objects.equals(val, finalFavValue)) {
                 this.popularChild = node;
             }
