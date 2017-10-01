@@ -45,6 +45,9 @@ public class myC45 extends AbstractClassifier {
     private void fillMissingValue(Instances instances) {
         @SuppressWarnings("unchecked")
         HashMap<Double, Integer>[] counter = new HashMap[instances.numAttributes()];
+        for (int i = 0; i < counter.length; i++) {
+            counter[i] = new HashMap<>();
+        }
         Double[] popularAttribute = new Double[instances.numAttributes()];
         Integer[] maxCounter = new Integer[instances.numAttributes()];
         Enumeration<Instance> instanceEnumeration = instances.enumerateInstances();
