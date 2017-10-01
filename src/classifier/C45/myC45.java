@@ -90,6 +90,7 @@ class DTLNode implements Serializable {
     private DTLNode popularChild;
     private Double threshold;
     private DTLNode parent = null;
+    private boolean pruneChecked = false;
 
     DTLNode() {
         children = new HashMap<>();
