@@ -291,4 +291,56 @@ class DTLNode implements Serializable {
         }
         return this.children.get(instance.value(this.attributeToClassify)).classify(instance);
     }
+
+    
+    public boolean hasChildren(){
+        return children.isEmpty();
+    }
+    
+    void prunReducedError(Instances evaluationSet){
+        ArrayList<DTLNode> leafNodes = this.getAllLeaf();
+        for(int i=0; i<leafNodes.size(); i++){
+            int prevErr = countError(evaluationSet);
+            DTLNode nodeParent = leafNodes.get(i).getParent();
+            Double temp = nodeParent.classifiedClass;
+            nodeParent.isLeaf = true;
+            nodeParent.classifiedClass = leafNodes.get(i).classifiedClass;
+            int afterErr = countError(evaluationSet);
+            if(afterErr>prevErr){
+                nodeParent.isLeaf = false;
+                nodeParent.classifiedClass = temp;
+            }else{
+                leafNodes.get(i).pruneChecked = true;
+            }
+        }
+    }
+    
+    ArrayList<DTLNode> getAllLeaf(){
+        ArrayList<DTLNode> list = new ArrayList<>();
+        getLeaf(list, this);
+        return list;
+    }
+    
+    void getLeaf(ArrayList<DTLNode> list, DTLNode node){
+        if(node.isLeaf){
+            if(!node.pruneChecked){
+                list.add(node);
+            }
+        }else{
+            getLeaf(list,node.children.get(0.0));
+            getLeaf(list,node.children.get(1.0));
+        }        
+    }
+    
+    int countError(Instances evaluationSet){
+        int error = 0;
+        for(int i=0; i<evaluationSet.numInstances(); i++){
+            Instance instance = evaluationSet.instance(i);
+            if(instance.value(instance.classIndex()) != classify(instance)){
+                error++;
+            }
+        }
+        return error;
+    }
+    
 }
