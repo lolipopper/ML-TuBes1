@@ -165,7 +165,7 @@ public class myID3 extends AbstractClassifier {
 
 }
 
-class myID3Node{
+class myID3Node implements Serializable{
     public boolean isLeaf = false;
     private int key;
     private double value;
