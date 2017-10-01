@@ -22,7 +22,7 @@ public class myC45 extends AbstractClassifier {
 
     public static void main(String[] args) throws Exception {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        String filename = "/Users/anthony/ML/ML-TuBes1/test/iris.arff";
+        String filename = "/Users/anthony/ML/ML-TuBes1/test/weather.numeric.arff";
         ConverterUtils.DataSource source = new ConverterUtils.DataSource(filename);
         Instances data = source.getDataSet();
         if (data.classIndex() == -1) {
@@ -30,6 +30,12 @@ public class myC45 extends AbstractClassifier {
         }
         myC45 classifier = new myC45();
         classifier.buildClassifier(data);
+        Enumeration<Instance> instanceEnumeration = data.enumerateInstances();
+        while (instanceEnumeration.hasMoreElements()) {
+            Instance instance = instanceEnumeration.nextElement();
+            classifier.classifyInstance(instance);
+        }
+
     }
 
     @Override
@@ -44,7 +50,6 @@ public class myC45 extends AbstractClassifier {
 
         // class
         result.enable(Capabilities.Capability.NOMINAL_CLASS);
-        result.enable(Capabilities.Capability.MISSING_CLASS_VALUES);
 
         return result;
     }
@@ -297,7 +302,7 @@ class DTLNode implements Serializable {
                 return this.children.get(1.0).classify(instance);
             }
         }
-        if (instance.isMissing(this.attributeToClassify)) {
+        if (instance.isMissing(this.attributeToClassify) || this.children.get(instance.value(this.attributeToClassify)) == null) {
             return this.popularChild.classify(instance);
         }
         return this.children.get(instance.value(this.attributeToClassify)).classify(instance);
